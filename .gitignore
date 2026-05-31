@@ -25,3 +25,11 @@ Desktop.ini
 # Local repository files
 .opencode/
 firmware.bin
+
+# Ignore local photographs and setup images
+*.jpg
+*.jpeg
+*.png
+*.heic
+*.bmp
+*.gif
