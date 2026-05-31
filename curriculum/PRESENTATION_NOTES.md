@@ -25,12 +25,21 @@
     > Think about the power of this. We can calculate the exact coordinate of your index tip (Landmark 8) and your thumb tip (Landmark 4). If we measure the distance between them, we can tell if you are pinching your fingers! Let's open **`mediapipe_starter.py`** and turn your hand into an air volume controller."
 *   **Teacher Action:** Help them run `mediapipe_starter.py`. Watch them smile as they pinch their fingers and see the green on-screen volume bar dynamically slide up and down.
 
-### Slide 4: YOLO — Object Detection (Giving AI a Brain)
-*   **Slide Visual:** A bounding box around a person, dog, and a bicyclist labeled with high confidence percentages.
+### Slide 4: YOLO — Advanced Pixel-Perfect AI Segmentation
+*   **Slide Visual:** Translucent, colored silhouettes wrapped around a person, a cup, and a laptop with high-confidence labels.
 *   **What to Say:**
-    > "Now, tracing skeletons is cool, but what if we want our robot to recognize *what* it is looking at? That's where **YOLO** comes in: **You Only Look Once**. It is one of the fastest and most famous neural networks in the world. Instead of slowly scanning an image, YOLO looks at the entire frame *once* and draws bounding boxes around objects in milliseconds. 
-    > Let's load the lightweight **YOLOv8 Nano** model using **`yolo_starter.py`**. Hold up your phones, your keys, or your cups, and watch the AI label them instantly!"
-*   **Teacher Action:** Guide them through installing `ultralytics` and running the script. Let them hold up items and watch YOLO detect them.
+    > "Skeletons are amazing, but what if our AI needs to recognize *what* it is looking at and *where* its boundary is? Usually, object detectors draw a boring box around a target (Object Detection). 
+    > But today, we are going to use something far more advanced: **YOLOv8 Instance Segmentation**. Rather than drawing block boxes, the AI calculates a pixel-perfect, colored translucent mask that wraps perfectly around your silhouette, your phone, or your coffee mug in real-time. 
+    > Let's load the advanced pre-trained segmentation model **`yolo_starter.py`**. Hold up your phones and mugs, and watch the AI outline them flawlessly!"
+*   **Teacher Action:** Guide them through installing `ultralytics` and running the script. Watch their eyes widen as YOLOv8-Seg tracks and highlights the exact shape of their bodies and items.
+
+### Slide 5: The Grand Challenge — The Skeletal Virtual Mouse!
+*   **Slide Visual:** A hand hovering in front of a monitor, controlling the Windows desktop with pointing and clicking gestures.
+*   **What to Say:**
+    > "To wrap up our first day, let's build something that completely replaces physical hardware. What if you didn't need a physical mouse or touchpad? 
+    > We are going to run **`virtual_mouse.py`**. By pointing your index finger, your camera tracks the position and moves your actual Windows desktop cursor in real-time! 
+    > If you pinch your index and thumb, it triggers a **Left Click and Drag**. If you pinch your middle finger and thumb, it triggers a **Right Click**. You can literally play solitaire, drag folders, and open files entirely in the air! Go ahead and test your creation!"
+*   **Teacher Action:** Guide them through running `virtual_mouse.py` and sliding windows, clicking icons, and highlighting text entirely in the air. 
 
 ---
 
@@ -39,7 +48,7 @@
 ### Part 1: The LIVE Puppet Show (0:00 - 0:30)
 *   **Setup:** Position the 6-DOF Robotic Arm prominently on the center desk. Ensure its silver 5V power supply is on, and the USB cable is plugged into your laptop.
 *   **What to Say:**
-    > "Yesterday, you learned the software. You learned how to capture video (OpenCV), track skeletons (MediaPipe), and analyze music. Today, we bridge the gap. We are going to connect our laptop's software brain directly to the muscles of this 3D-printed robotic arm. Who wants to control the robot with their bare hand first?"
+    > "Yesterday, you learned the software. You learned how to capture video (OpenCV), track skeletons (MediaPipe), build virtual mice, and segment shapes with advanced AI. Today, we bridge the gap. We are going to connect our laptop's software brain directly to the muscles of this 3D-printed robotic arm. Who wants to control the robot with their bare hand first?"
 *   **Live Demonstration (The Puppet):**
     1.  Launch **`vision_puppet_pro.py`** on your laptop.
     2.  Raise your hand. The arm will snap to attention and center itself.

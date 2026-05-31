@@ -12,27 +12,32 @@
 ### ⏱️ Timeline & Breakdown (150 Mins)
 
 #### 0:00 - 0:15 (15 Mins) | The Hook: What is Computer Vision?
-*   **Action:** Show a fast, 3-minute video of self-driving cars, surgery robots, and robotic arms sorting sorting items. 
+*   **Action:** Show a fast, 3-minute video of self-driving cars, surgery robots, and robotic arms sorting items. 
 *   **Core Message:** "We are going to teach your laptop how to see today, and tomorrow, we are going to plug your laptop into a robotic arm to make it a physical puppet."
 
-#### 0:15 - 1:00 (45 Mins) | Lab 1: OpenCV — Playing with Pixels
+#### 0:15 - 0:50 (35 Mins) | Lab 1: OpenCV — Playing with Pixels
 *   **Concepts:** Frame capture, horizontal flip (mirroring), color space conversion (BGR to RGB), drawing overlays (circles, rectangles, texts).
-*   **Hands-on:** Students open a basic script, initialize their webcam, and write a simple script to draw a green circle that mirrors their movement on the screen.
+*   **Hands-on (`opencv_starter.py`):** Students open a basic script, initialize their webcam, and write a simple script to draw a green circle that mirrors their movement on the screen.
 *   **Key takeaway:** OpenCV turns raw video into numerical arrays (pixels) we can manipulate with Python.
 
-#### 1:00 - 1:45 (45 Mins) | Lab 2: MediaPipe — Gesture Mapping & The Virtual Slider
+#### 0:50 - 1:30 (40 Mins) | Lab 2: MediaPipe — Gesture Mapping & The Virtual Slider
 *   **Concepts:** Deep-learning based skeletal hand tracking, 21 landmark coordinate vectors.
-*   **Hands-on:** Students load a skeletal hands model, isolate the **Thumb Tip (4)** and **Index Tip (8)**, calculate their physical distance, and use it to control an on-screen "Air Slider" or virtual volume bar.
+*   **Hands-on (`mediapipe_starter.py`):** Students load a skeletal hands model, isolate the **Thumb Tip (4)** and **Index Tip (8)**, calculate their physical distance, and use it to control an on-screen "Air Slider" or virtual volume bar.
 *   **Key takeaway:** We can turn physical human hand poses into exact floating-point numbers in real-time.
 
-#### 1:45 - 2:15 (30 Mins) | Lab 3: YOLOv8 — Giving the AI Eyes
-*   **Concepts:** Object Detection vs Tracking, bounding boxes, class classification, pre-trained weights.
-*   **Hands-on:** Run a 5-line YOLOv8 model on their webcam. Students hold up their phones, cups, keys, or wallets, and watch the AI draw boxes around them and label them in milliseconds.
-*   **Key takeaway:** AI doesn't just see pixels; it understands *objects* and *context*.
+#### 1:30 - 2:05 (35 Mins) | Lab 3: Advanced AI Instance Segmentation with YOLOv8-Seg
+*   **Concepts:** Object Detection vs Semantic/Instance Segmentation, bounding boxes vs pixel-perfect masks, YOLOv8 model architecture.
+*   **Hands-on (`yolo_starter.py`):** Run the advanced pre-trained **YOLOv8-Seg** model. Instead of boring boxes, students see multicolored, translucent pixel-perfect outlines drawn around their bodies, phones, and cups in real-time!
+*   **Key takeaway:** AI doesn't just draw blocks; it can mathematically map the exact shape and contours of objects.
 
-#### 2:15 - 2:30 (15 Mins) | Day 1 Debrief & Day 2 Teaser
-*   **Recap:** "Today we turned pixels into coordinates (OpenCV), tracked hand skeletons (MediaPipe), and detected objects (YOLO)."
-*   **Teaser:** "Tomorrow, we plug these exact scripts into our physical 6-DOF Robotic Arm and turn your hand into a digital controller!"
+#### 2:05 - 2:25 (20 Mins) | The Grand Challenge: The Skeletal Virtual Mouse!
+*   **Concepts:** Mouse cursor coordinate interpolation, PyAutoGUI operating system automation, click/drag states.
+*   **Hands-on (`virtual_mouse.py`):** Students run the script and put their hands up. They can physically move their actual Windows mouse cursor by pointing, and pinch their fingers to do real left-clicks, right-clicks, and smooth window dragging!
+*   **Key takeaway:** Computer Vision can replace physical hardware (mice, keyboards, controllers) entirely.
+
+#### 2:25 - 2:30 (5 Mins) | Day 1 Debrief & Day 2 Teaser
+*   **Recap:** "Today we turned pixels into coordinate grids, ran skeletal hand controllers, performed advanced AI segmentation, and built a physical virtual mouse!"
+*   **Teaser:** "Tomorrow, we plug these exact same scripts into our physical 6-DOF Robotic Arm and turn your hand into a physical robotic controller!"
 
 ---
 

@@ -1,10 +1,11 @@
 # =========================================================================================
-# LESSON 3: OBJECT DETECTION WITH YOLOv8 (yolo_starter.py)
+# LESSON 3: ADVANCED AI SEGMENTATION WITH YOLOv8 (yolo_starter.py)
 # 
 # What we will do:
-# 1. Install Ultralytics library (the developer of YOLO).
-# 2. Load the pre-trained, lightweight YOLOv8n (nano) neural network.
-# 3. Detect and classify 80 standard objects (phones, cups, chairs, persons) in real-time.
+# 1. Load the pre-trained YOLOv8 Nano Segmentation model (yolov8n-seg.pt).
+# 2. Perform live, pixel-perfect instance segmentation (not just bounding boxes,
+#    but colored, form-fitting outlines of every object!).
+# 3. Use the built-in plot() engine to draw stunning translucent overlays.
 # =========================================================================================
 
 # --- INSTRUCTIONS FOR STUDENTS ---
@@ -22,11 +23,11 @@ except ImportError:
     input("\nPress Enter to exit...")
     exit()
 
-# Step 1: Load the lightweight pre-trained YOLOv8 Nano model
-# The model will automatically download 'yolov8n.pt' (approx 6MB) on its very first run!
-print("Loading YOLOv8 AI Model... (this might download a 6MB file on the first run)")
-model = YOLO('yolov8n.pt')
-print("YOLOv8 successfully loaded and ready!")
+# Step 1: Load the advanced pre-trained YOLOv8 Nano Segmentation model
+# This model will download 'yolov8n-seg.pt' (approx 7MB) on its first run
+print("Loading Advanced YOLOv8 Segmentation AI Model...")
+model = YOLO('yolov8n-seg.pt')
+print("YOLOv8 Segmentation model successfully loaded!")
 
 # Step 2: Open webcam capture
 cap = cv2.VideoCapture(0)
@@ -38,47 +39,22 @@ while cap.isOpened():
 
     frame = cv2.flip(frame, 1)
 
-    # Step 3: Run YOLOv8 on the frame
-    # 'stream=True' optimizes performance for continuous webcam frames
+    # Step 3: Run YOLOv8 Segmentation on the frame
     results = model(frame, stream=True)
 
-    # Step 4: Parse detection results
+    # Step 4: Parse detection results & auto-plot gorgeous outlines/masks
     for r in results:
-        # Get detected bounding boxes
-        boxes = r.boxes
-        for box in boxes:
-            # 1. Get raw coordinates of the bounding box
-            x1, y1, x2, y2 = box.xyxy[0]
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-            
-            # 2. Get the Object Class ID and Name (e.g. Person, Cup, Cell phone)
-            class_id = int(box.cls[0])
-            class_name = model.names[class_id]
-            
-            # 3. Get the prediction confidence rating (0.0 to 1.0)
-            confidence = float(box.conf[0])
-            
-            # 4. Only draw boxes for predictions with greater than 50% confidence
-            if confidence > 0.5:
-                # Draw a neon blue bounding box around the object
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 100, 0), 3)
-                
-                # Create a text label: "person: 85%"
-                label = f"{class_name}: {int(confidence * 100)}%"
-                
-                # Draw a text background rectangle
-                cv2.rectangle(frame, (x1, y1 - 25), (x1 + len(label) * 11, y1), (255, 100, 0), -1)
-                
-                # Write label text
-                cv2.putText(frame, label, (x1 + 5, y1 - 7), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        # r.plot() is a powerful engine built into Ultralytics.
+        # It automatically draws translucent masks on segmented objects, bounding boxes, 
+        # class labels (e.g., person, bottle, laptop), and prediction confidence levels!
+        frame = r.plot()
 
     # Display window title
-    cv2.putText(frame, "YOLOv8 REAL-TIME DETECTOR", (20, 40), 
+    cv2.putText(frame, "YOLOv8 LIVE AI SEGMENTATION", (20, 40), 
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
 
     # Show video window
-    cv2.imshow('Day 1 - YOLOv8 Object Detection', frame)
+    cv2.imshow('Day 1 - YOLOv8 Live Segmentation', frame)
 
     # Press 'q' to quit
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -87,4 +63,4 @@ while cap.isOpened():
 # Cleanup
 cap.release()
 cv2.destroyAllWindows()
-print("YOLOv8 shutdown successfully.")
+print("YOLOv8 Segmentation shutdown successfully.")
