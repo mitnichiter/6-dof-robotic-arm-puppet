@@ -5,15 +5,17 @@
 # 1. Use MediaPipe to track the Index Finger Knuckle (Landmark 5) as your mouse cursor.
 # 2. Distance-Adaptive Sensitivity: Dynamically shrinks the active tracking box when you
 #    are far from the camera, allowing tiny hand movements to sweep the entire screen.
-# 3. Time-Based Tap vs Drag Engine (Hysteresis-driven):
+# 3. Pure Normalized Coordinate Math: Calculates finger pinch ratios in raw 0.0-1.0 coordinate
+#    space, making the mouse 100% immune to camera aspect ratio, resolution, or distance.
+# 4. Time-Based Tap vs Drag Engine (Hysteresis-driven):
 #    - Pinching index + thumb triggers Left Click.
 #    - Pinching middle + thumb triggers Right Click.
-#    - 60% Activation Threshold: Fingers within 60% of palm size are considered pinched.
+#    - Loose Pinch Activation (0.35): Fingers only need to be near each other (35% of palm size)
+#      to trigger a click/drag—no hard squeezing required!
+#    - Safety Release Cushion (0.50): Drag stays locked until fingers open wide past 50% of palm size.
 #    - Quick Tap: Release within 250ms triggers a standard OS click.
-#    - Smooth Drag: Holding past 250ms triggers Drag Mode (mouseDown) which stays locked
-#      until fingers open wide past 75% of palm size (prevents accidental drops).
-# 4. Hand Tilt Protection: Disables click triggers if the hand is rotated sideways or upside
-#    down to prevent false clicks during hand movement.
+#    - Smooth Drag: Holding past 250ms triggers Drag Mode (mouseDown).
+# 5. Mutual Exclusion Lock: Prevents Left and Right clicks from ever mixing.
 # =========================================================================================
 
 import cv2
@@ -89,13 +91,15 @@ while cap.isOpened():
             middle_px = (int(middle_tip.x * width), int(middle_tip.y * height))
             
             # --- 1. SKELETAL PALM SIZE (DISTANCE-ADAPTIVE SENSITIVITY) ---
-            palm_size = math.hypot(lm9.x - lm0.x, lm9.y - lm0.y) * width
+            # Normalized Palm Size (Wrist to Knuckle 9)
+            palm_size_norm = math.hypot(lm9.x - lm0.x, lm9.y - lm0.y)
+            palm_size_px = palm_size_norm * width
             
             def map_range(x, in_min, in_max, out_min, out_max):
                 val = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
                 return max(min(out_min, out_max), min(max(out_min, out_max), val))
                 
-            box_width = map_range(palm_size, 40, 180, 0.12, 0.35)
+            box_width = map_range(palm_size_px, 40, 180, 0.12, 0.35)
             xmin, xmax = 0.5 - box_width / 2, 0.5 + box_width / 2
             ymin, ymax = 0.5 - box_width / 2, 0.5 + box_width / 2
             
@@ -126,90 +130,64 @@ while cap.isOpened():
                 cv2.destroyAllWindows()
                 exit()
             
-            # --- 3. HAND TILT PROTECTION ---
-            # Calculate hand angle. Straight up is approx -90 degrees.
-            dx = lm9.x - lm0.x
-            dy = lm9.y - lm0.y
-            hand_angle = math.degrees(math.atan2(dy, dx))
-            is_hand_upright = (-140 <= hand_angle <= -40)
-            
-            # --- 4. TIME-BASED TAP & DRAG ENGINE WITH HYSTERESIS ---
-            # Calculate raw pixel distances
-            left_pixel_dist = math.hypot(thumb_px[0] - index_px[0], thumb_px[1] - index_px[1])
-            right_pixel_dist = math.hypot(thumb_px[0] - middle_px[0], thumb_px[1] - middle_px[1])
-            
-            # Normalize by current Palm Size (100% distance-independent!)
-            left_norm = left_pixel_dist / palm_size
-            right_norm = right_pixel_dist / palm_size
+            # --- 3. TIME-BASED TAP & DRAG ENGINE WITH HYSTERESIS ---
+            # Calculate normalized distances purely in 0.0-1.0 coordinate space (aspect ratio proof!)
+            left_norm = math.hypot(thumb_tip.x - index_tip.x, thumb_tip.y - index_tip.y) / palm_size_norm
+            right_norm = math.hypot(thumb_tip.x - middle_tip.x, thumb_tip.y - middle_tip.y) / palm_size_norm
             
             # Hysteresis Thresholds:
-            # - Activates at 0.60 (intentional pinch close - generous limit!)
-            # - Releases only when fingers open past 0.75 (safety release cushion)
-            PINCH_ACTIVATE = 0.60
-            PINCH_RELEASE = 0.75
+            # - PINCH_ACTIVATE (0.35): Fingers only need to be within 35% of palm size (very loose/easy!)
+            # - PINCH_RELEASE (0.50): Stays locked as long as fingers are within 50% of palm size
+            PINCH_ACTIVATE = 0.35
+            PINCH_RELEASE = 0.50
             
-            if is_hand_upright:
-                # A. LEFT CLICK & DRAG (Index + Thumb)
-                # Lock out if right click is currently active/pinch is starting
-                if not right_is_holding and right_pinch_start == 0.0:
-                    if left_norm < PINCH_ACTIVATE:
-                        if left_pinch_start == 0.0:
-                            left_pinch_start = time.time()
+            # A. LEFT CLICK & DRAG (Index + Thumb)
+            if not right_is_holding and right_pinch_start == 0.0:  # Mutual Exclusion
+                if left_norm < PINCH_ACTIVATE:
+                    if left_pinch_start == 0.0:
+                        left_pinch_start = time.time()
+                    else:
+                        # Hold detected: if pinched for more than 250ms, start standard Drag (mouseDown)
+                        if not left_is_holding and (time.time() - left_pinch_start > 0.25):
+                            pyautogui.mouseDown(button='left')
+                            left_is_holding = True
+                            print("[LEFT] Dragging started...")
+                elif left_norm > PINCH_RELEASE:
+                    if left_pinch_start != 0.0:
+                        duration = time.time() - left_pinch_start
+                        if left_is_holding:
+                            pyautogui.mouseUp(button='left')
+                            left_is_holding = False
+                            print("[LEFT] Dragging released")
                         else:
-                            # Hold detected: if pinched for more than 250ms, start standard Drag (mouseDown)
-                            if not left_is_holding and (time.time() - left_pinch_start > 0.25):
-                                pyautogui.mouseDown(button='left')
-                                left_is_holding = True
-                                print("[LEFT] Dragging started...")
-                    elif left_norm > PINCH_RELEASE:
-                        if left_pinch_start != 0.0:
-                            duration = time.time() - left_pinch_start
-                            if left_is_holding:
-                                # Release active drag
-                                pyautogui.mouseUp(button='left')
-                                left_is_holding = False
-                                print("[LEFT] Dragging released")
-                            else:
-                                # Quick tap: released before 250ms, register as single Click!
-                                pyautogui.click(button='left')
-                                print(f"[LEFT] Click registered (Duration: {duration:.2f}s)")
-                            left_pinch_start = 0.0
-                            
-                # B. RIGHT CLICK & DRAG (Middle + Thumb)
-                # Lock out if left click is currently active/pinch is starting
-                if not left_is_holding and left_pinch_start == 0.0:
-                    if right_norm < PINCH_ACTIVATE:
-                        if right_pinch_start == 0.0:
-                            right_pinch_start = time.time()
+                            # Quick tap: registered as single Click!
+                            pyautogui.click(button='left')
+                            print(f"[LEFT] Click registered (Duration: {duration:.2f}s)")
+                        left_pinch_start = 0.0
+                        
+            # B. RIGHT CLICK & DRAG (Middle + Thumb)
+            if not left_is_holding and left_pinch_start == 0.0:  # Mutual Exclusion
+                if right_norm < PINCH_ACTIVATE:
+                    if right_pinch_start == 0.0:
+                        right_pinch_start = time.time()
+                    else:
+                        # Hold detected: if pinched for more than 250ms, start Right Drag (mouseDown)
+                        if not right_is_holding and (time.time() - right_pinch_start > 0.25):
+                            pyautogui.mouseDown(button='right')
+                            right_is_holding = True
+                            print("[RIGHT] Dragging started...")
+                elif right_norm > PINCH_RELEASE:
+                    if right_pinch_start != 0.0:
+                        duration = time.time() - right_pinch_start
+                        if right_is_holding:
+                            pyautogui.mouseUp(button='right')
+                            right_is_holding = False
+                            print("[RIGHT] Dragging released")
                         else:
-                            # Hold detected: if pinched for more than 250ms, start Right Drag (mouseDown)
-                            if not right_is_holding and (time.time() - right_pinch_start > 0.25):
-                                pyautogui.mouseDown(button='right')
-                                right_is_holding = True
-                                print("[RIGHT] Dragging started...")
-                    elif right_norm > PINCH_RELEASE:
-                        if right_pinch_start != 0.0:
-                            duration = time.time() - right_pinch_start
-                            if right_is_holding:
-                                # Release active drag
-                                pyautogui.mouseUp(button='right')
-                                right_is_holding = False
-                                print("[RIGHT] Dragging released")
-                            else:
-                                # Quick tap: released before 250ms, register as single Right Click!
-                                pyautogui.click(button='right')
-                                print(f"[RIGHT] Click registered (Duration: {duration:.2f}s)")
-                            right_pinch_start = 0.0
-            else:
-                # Hand is tilted sideways. Force release any active clicks for safety.
-                if left_is_holding:
-                    pyautogui.mouseUp(button='left')
-                    left_is_holding = False
-                if right_is_holding:
-                    pyautogui.mouseUp(button='right')
-                    right_is_holding = False
-                left_pinch_start = 0.0
-                right_pinch_start = 0.0
+                            # Quick tap: registered as single Right Click!
+                            pyautogui.click(button='right')
+                            print(f"[RIGHT] Click registered (Duration: {duration:.2f}s)")
+                        right_pinch_start = 0.0
 
             # Draw visual feedback lines
             if left_pinch_start != 0.0:
