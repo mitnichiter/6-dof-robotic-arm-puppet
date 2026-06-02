@@ -26,6 +26,7 @@ Desktop.ini
 .opencode/
 firmware.bin
 *.exe
+*.pt
 
 # Ignore local photographs and setup images
 *.jpg
