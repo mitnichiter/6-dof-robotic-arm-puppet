@@ -2,7 +2,7 @@
 
 **Target Audience:** 75 Students (Split into 3 batches of ~25 students each)  
 **Time Allocation:** 2.5 Hours per batch per day (Total: 5 Hours per student over 2 days)  
-**Core Goal:** Showcase "magic" with OpenCV, MediaPipe, and YOLOv8, and then demonstrate how these software layers drive the physical 6-DOF Robotic Arm to hook them into the advanced full-term Robotics Course.
+**Core Goal:** Showcase "magic" with OpenCV, MediaPipe, and YOLO11, and then demonstrate how these software layers drive the physical 6-DOF Robotic Arm to hook them into the advanced full-term Robotics Course.
 
 ---
 
@@ -25,9 +25,9 @@
 *   **Hands-on (`mediapipe_starter.py`):** Students load a skeletal hands model, isolate the **Thumb Tip (4)** and **Index Tip (8)**, calculate their physical distance, and use it to control an on-screen "Air Slider" or virtual volume bar.
 *   **Key takeaway:** We can turn physical human hand poses into exact floating-point numbers in real-time.
 
-#### 1:30 - 2:05 (35 Mins) | Lab 3: Advanced AI Instance Segmentation with YOLOv8-Seg
-*   **Concepts:** Object Detection vs Semantic/Instance Segmentation, bounding boxes vs pixel-perfect masks, YOLOv8 model architecture.
-*   **Hands-on (`yolo_starter.py`):** Run the advanced pre-trained **YOLOv8-Seg** model. Instead of boring boxes, students see multicolored, translucent pixel-perfect outlines drawn around their bodies, phones, and cups in real-time!
+#### 1:30 - 2:05 (35 Mins) | Lab 3: Advanced AI Instance Segmentation with YOLO11-Seg
+*   **Concepts:** Object Detection vs Semantic/Instance Segmentation, bounding boxes vs pixel-perfect masks, YOLO11 model architecture.
+*   **Hands-on (`yolo_starter.py`):** Run the advanced pre-trained **YOLO11-Seg** model. Instead of boring boxes, students see multicolored, translucent pixel-perfect outlines drawn around their bodies, phones, and cups in real-time!
 *   **Key takeaway:** AI doesn't just draw blocks; it can mathematically map the exact shape and contours of objects.
 
 #### 2:05 - 2:25 (20 Mins) | The Grand Challenge: The Skeletal Virtual Mouse!

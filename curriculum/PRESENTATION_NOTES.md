@@ -29,9 +29,9 @@
 *   **Slide Visual:** Translucent, colored silhouettes wrapped around a person, a cup, and a laptop with high-confidence labels.
 *   **What to Say:**
     > "Skeletons are amazing, but what if our AI needs to recognize *what* it is looking at and *where* its boundary is? Usually, object detectors draw a boring box around a target (Object Detection). 
-    > But today, we are going to use something far more advanced: **YOLOv8 Instance Segmentation**. Rather than drawing block boxes, the AI calculates a pixel-perfect, colored translucent mask that wraps perfectly around your silhouette, your phone, or your coffee mug in real-time. 
-    > Let's load the advanced pre-trained segmentation model **`yolo_starter.py`**. Hold up your phones and mugs, and watch the AI outline them flawlessly!"
-*   **Teacher Action:** Guide them through installing `ultralytics` and running the script. Watch their eyes widen as YOLOv8-Seg tracks and highlights the exact shape of their bodies and items.
+    > But today, we are going to use something far more advanced: **YOLO11 Instance Segmentation**. Rather than drawing block boxes, the AI calculates a pixel-perfect, colored translucent mask that wraps perfectly around your silhouette, your phone, or your coffee mug in real-time. 
+
+*   **Teacher Action:** Guide them through installing `ultralytics` and running the script. Watch their eyes widen as YOLO11-Seg tracks and highlights the exact shape of their bodies and items.
 
 ### Slide 5: The Grand Challenge — The Skeletal Virtual Mouse!
 *   **Slide Visual:** A hand hovering in front of a monitor, controlling the Windows desktop with pointing and clicking gestures.

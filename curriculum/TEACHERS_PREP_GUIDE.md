@@ -40,8 +40,8 @@ Your presenter laptop must have all computer vision, AI, and audio packages pre-
     ```bash
     python -m pip install opencv-python mediapipe ultralytics pyaudiowpatch numpy pywin32 customtkinter pyautogui
     ```
-- [ ] **Pre-Cache YOLOv8 Models:**
-    YOLOv8 downloads model files (`yolov8n-seg.pt` and `yolov8n.pt`) on its first execution. **Do not do this on class Wi-Fi!** Run the starter script once now to pre-download and cache the weights locally:
+- [ ] **Pre-Cache YOLO11 Models:**
+    YOLO11 downloads model files (`yolo11n-seg.pt` and `yolo11n.pt`) on its first execution. **Do not do this on class Wi-Fi!** Run the starter script once now to pre-download and cache the weights locally:
     ```bash
     python curriculum/Day1_Code_Lab/yolo_starter.py
     ```
