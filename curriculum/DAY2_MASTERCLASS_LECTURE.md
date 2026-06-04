@@ -246,6 +246,132 @@ while True:
                 pass
 ```
 
+### 3. The PC Host Controller (vision_puppet_pro.py)
+This is the advanced Python script running on your laptop. It handles the computer vision, MediaPipe skeletons, dynamic math mapping, safety checks, and blasts the angles over Serial to the ESP32.
+
+```python
+# ==========================================================
+# HOST CONTROLLER: vision_puppet_pro.py (On PC)
+# ==========================================================
+import cv2
+import mediapipe as mp
+import serial
+import time
+import math
+
+# --- 1. THE HOST COMMUNICATION PORT ---
+try:
+    print("Connecting to ESP32 on COM5...")
+    ser = serial.Serial('COM5', 115200, timeout=1)
+    time.sleep(3) # Let ESP32 finish its boot sequence
+    ser.reset_input_buffer()
+except Exception as e:
+    print(f"Connection failed: {e}")
+    exit()
+
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.75, min_tracking_confidence=0.75)
+mp_draw = mp.solutions.drawing_utils
+cap = cv2.VideoCapture(0)
+
+def map_range(x, in_min, in_max, out_min, out_max):
+    val = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    return max(min(out_min, out_max), min(max(out_min, out_max), val))
+
+def is_fist(landmarks):
+    """
+    Gesture Engine: Detects if fingers are curled into the palm (Fist Clutch)
+    If Index, Middle, Ring, and Pinky tips are closer to the wrist than their knuckles, 
+    it means the hand is closed.
+    """
+    wrist = landmarks.landmark[mp_hands.HandLandmark.WRIST]
+    tips = [mp_hands.HandLandmark.INDEX_FINGER_TIP, mp_hands.HandLandmark.MIDDLE_FINGER_TIP, 
+            mp_hands.HandLandmark.RING_FINGER_TIP, mp_hands.HandLandmark.PINKY_TIP]
+    mcps = [mp_hands.HandLandmark.INDEX_FINGER_MCP, mp_hands.HandLandmark.MIDDLE_FINGER_MCP, 
+            mp_hands.HandLandmark.RING_FINGER_MCP, mp_hands.HandLandmark.PINKY_MCP]
+    
+    curled = 0
+    for tip, mcp in zip(tips, mcps):
+        dist_tip = math.hypot(landmarks.landmark[tip].x - wrist.x, landmarks.landmark[tip].y - wrist.y)
+        dist_mcp = math.hypot(landmarks.landmark[mcp].x - wrist.x, landmarks.landmark[mcp].y - wrist.y)
+        if dist_tip < dist_mcp: curled += 1
+    return curled >= 3
+
+# State tracking (Home default positions)
+smoothed_angles = [90, 90, 0, 145, 80, 45]
+last_send_time = time.time()
+arm_frozen = False
+
+while cap.isOpened():
+    success, image = cap.read()
+    if not success: continue
+    image = cv2.flip(image, 1) # Mirror
+    results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    
+    target_angles = [90, 90, 0, 145, 80, 45] # Default
+    hand_detected = False
+
+    if results.multi_hand_landmarks:
+        hand_detected = True
+        hand_landmarks = results.multi_hand_landmarks[0]
+        mp_draw.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+        
+        # --- THE CLUTCH ENGINE ---
+        if is_fist(hand_landmarks):
+            arm_frozen = True # Freeze arm targets
+        else:
+            arm_frozen = False
+            
+        if not arm_frozen:
+            lm0 = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
+            lm9 = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
+            
+            # --- 2. MULTI-AXIS COORDINATE INTERPOLATION ---
+            center_x, center_y = lm9.x, lm9.y
+            
+            # Base (X-axis): Maps normalized 0.1-0.9 coordinates to 180-0 degrees
+            base_target = map_range(center_x, 0.1, 0.9, 180, 0)
+            # Up/Down (Y-axis): Maps vertical hand height to 160-20 degrees
+            up_down_target = map_range(center_y, 0.1, 0.9, 160, 20)
+            
+            # --- 3. STABLE SKELETAL DEPTH (Z-axis) ---
+            # Distance from Wrist (lm0) to Knuckle (lm9) is rigid and never changes 
+            # when pinching fingers, making the reach mapping rock-solid.
+            palm_size = math.hypot(lm9.x - lm0.x, lm9.y - lm0.y)
+            reach = map_range(palm_size, 0.05, 0.25, 0.0, 1.0)
+            
+            # Kinematic coupling: close hand -> shoulder leans forward & elbow reaches down
+            rotary_target = map_range(reach, 0.0, 1.0, 145, 60)
+            elbow_target = map_range(reach, 0.0, 1.0, 0, 150)
+            
+            # --- 4. WRIST ROLL (Tilt) ---
+            dx, dy = lm9.x - lm0.x, lm9.y - lm0.y
+            angle = math.degrees(math.atan2(dy, dx))
+            wrist_target = map_range(angle, -135, -45, 190, 100)
+            
+            # --- 5. PINCH DETECTOR (Claw) ---
+            thumb = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
+            index = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+            pinch = math.hypot(thumb.x - index.x, thumb.y - index.y)
+            claw_target = map_range(pinch, 0.03, 0.12, 0, 90)
+            
+            target_angles = [base_target, rotary_target, elbow_target, wrist_target, up_down_target, claw_target]
+
+    # --- 6. SIGNAL SMOOTHING & SERIAL STREAMING ---
+    # Apply Holt's smoothing and stream data at 30 FPS
+    for i in range(6):
+        if not arm_frozen:
+            # Alpha smoothing (0.15 EMA)
+            smoothed_angles[i] = (0.15 * target_angles[i]) + (0.85 * smoothed_angles[i])
+            
+    if time.time() - last_send_time > 0.03:
+        b, r, e, w, u, c = [int(a) for a in smoothed_angles]
+        # Pack into our safe CSV envelope format
+        cmd = f"<{b},{r},{e},{w},{u},{c}>\n"
+        ser.write(cmd.encode('utf-8'))
+        last_send_time = time.time()
+```
+
 ---
 
 ## 🎭 Module 4: The Closing Pitch (15 Mins)
