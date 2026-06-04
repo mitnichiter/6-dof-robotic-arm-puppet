@@ -71,7 +71,12 @@ except Exception as e:
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.75, min_tracking_confidence=0.75)
 mp_draw = mp.solutions.drawing_utils
-cap = cv2.VideoCapture(0)
+
+# Try to open external USB Webcam (Index 1) first, fallback to internal (Index 0)
+cap = cv2.VideoCapture(1)
+if not cap.isOpened():
+    print("USB Webcam not found. Falling back to internal camera.")
+    cap = cv2.VideoCapture(0)
 
 # --- STATE VARIABLES ---
 home_state = [90, 90, 0, 145, 80, 45]
