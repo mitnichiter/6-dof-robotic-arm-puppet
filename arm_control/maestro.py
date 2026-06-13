@@ -133,8 +133,8 @@ class ButterSmoothFilter:
 
     def update(self, target):
         delta = abs(target - self.val)
-        # Conductor mode requires extremely heavy smoothing (0.03 - 0.15) for majestic glides
-        alpha = max(0.03, min(0.15, 0.03 + (delta / 100.0) * 0.12))
+        # Conductor mode requires extremely heavy smoothing (0.015 - 0.08) for majestic glides
+        alpha = max(0.015, min(0.08, 0.015 + (delta / 100.0) * 0.065))
         self.val = (alpha * target) + ((1.0 - alpha) * self.val)
         return self.val
 
@@ -195,7 +195,7 @@ try:
             
         # Continuous time phase for smooth math curves
         # Speeds up slightly during higher energy sections
-        conductor_phase += dt * (1.0 + (nrg * 1.2))
+        conductor_phase += dt * (0.6 + (nrg * 0.6))
 
         # Default values
         yaw = 90
@@ -221,12 +221,12 @@ try:
             # Base horizontal sweep (Yaw)
             # Sways side-to-side, wider during high energy
             yaw_amplitude = 50 * scale
-            yaw = 90 + math.sin(conductor_phase * 1.5) * yaw_amplitude
+            yaw = 90 + math.sin(conductor_phase * 1.0) * yaw_amplitude
             
             # Vertical height strokes (Up_down)
             # Sharp downward impacts on the beat, slow graceful rises
             # This is modeled by a saw-tooth-like sine wave
-            vertical_wave = math.cos(conductor_phase * 3.0)
+            vertical_wave = math.cos(conductor_phase * 2.0)
             up_down = 80 + (vertical_wave * (35 * scale))
             
             # Coordinated shoulder and elbow reach (creates the forward-reaching baton sweep)
@@ -238,7 +238,7 @@ try:
             # Delicate Wrist Flicks (Roll)
             # The wrist rolls left and right at the end of each stroke to "flick" the baton.
             # We use an out-of-phase cosine wave to flick exactly at the stroke boundaries
-            wrist_flick = math.cos(conductor_phase * 1.5 + math.pi/4) * (35 * scale)
+            wrist_flick = math.cos(conductor_phase * 1.0 + math.pi/4) * (35 * scale)
             wrist = 145 + wrist_flick
             
             # Claw (Baton grip) - holds the baton tightly during large movements
