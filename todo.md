@@ -23,3 +23,5 @@
 - [x] Phase 8: Deploy Air Canvas Challenge and Camera Scanner (Completed)
   - [x] Created curriculum/Day1_Code_Lab/air_canvas.py
   - [x] Created arm_control/scan_cams.py
+- [x] Phase 9: Deploy 10-Step Pure Generative Choreography Engine (Completed)
+  - [x] Created arm_control/dance_generative.py
