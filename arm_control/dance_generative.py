@@ -98,21 +98,17 @@ threading.Thread(target=audio_listener, daemon=True).start()
 try:
     print("Connecting to ESP32 on COM5...")
     ser = serial.Serial('COM5', 115200, timeout=1)
+    
+    # Force hardware reset exactly as tested and working
     ser.setDTR(False)
     ser.setRTS(True)
     time.sleep(0.1)
     ser.setRTS(False)
-    time.sleep(1.5)
     
-    ser.write(b'\r\x03\x03')
-    time.sleep(0.5)
+    print("Waiting 2 seconds for ESP32 to boot and start main.py...")
+    time.sleep(2.0)
     ser.reset_input_buffer()
-    
-    ser.write(b"from robot_arm import RobotArm\r\n")
-    time.sleep(0.5)
-    ser.write(b"arm = RobotArm()\r\n")
-    time.sleep(0.5)
-    print("ESP32 board successfully initialized!")
+    print("ESP32 board successfully initialized and listening!")
 except Exception as e:
     print(f"Failed to connect: {e}")
     exit()
@@ -237,7 +233,8 @@ try:
         # Dispatch serial command envelope to ESP32 @ 30 FPS
         if t_now - last_send_time > 0.033:
             b_val, r_val, e_val, w_val, u_val, c_val = [int(a) for a in current_angles]
-            cmd = f"arm.move(0,{b_val});arm.move(1,{r_val});arm.move(2,{e_val});arm.move(3,{w_val});arm.move(4,{u_val});arm.move(5,{c_val})\r\n"
+            # Stream the safe coordinates directly to the ESP32 main.py listener!
+            cmd = f"<{b_val},{r_val},{e_val},{w_val},{u_val},{c_val}>\n"
             ser.write(cmd.encode('utf-8'))
             last_send_time = t_now
             
@@ -253,12 +250,9 @@ except KeyboardInterrupt:
 finally:
     print("\n\nSafely parking and relaxing the arm...")
     try:
-        home_pos = HOME_STATE
-        for i in range(6):
-            ser.write(f"arm.move({i},{home_pos[i]})\r\n".encode())
-            time.sleep(0.1)
-        time.sleep(0.5)
-        ser.write(b"arm.relax()\r\n")
+        ser.write(b"<HOME>\n")
+        time.sleep(1.5)
+        ser.write(b"<RELAX>\n")
         ser.close()
     except Exception as e:
         print("Error during shutdown:", e)
